@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.6">
+       <title>GamePage</title>
+    <style>
+         body{
+            background-color: #202124;
+         }
+        #error{
+            font-family: "OldSansBlack";
+            font-size: 0.8em;
+        }
+        #gameCanvas{
+            width: 100%;
+        }
+        #firstline{
+            font-size: x-large;
+        }
+        #try{
+            margin-left: 20px;
+        }
+        .gridbox-container{
+             display: grid;
+             grid-template-columns: 1fr 3fr 1fr;
+            
+             
+             width: 100%;
+            
+            }
+        .container{
+            display: flex;
+            flex-direction: column;
+            /* justify-content: center; */
+            font-family: "Nurom-Bold";
+            font-size: 16px;
+            background-color: #202124;
+            color: #9aa0a6;
+        }
+        .Maintext{
+            width: 80%;
+            font-weight: 50;
+            font-size: 1.1em;
+        }
+        @font-face {
+            font-family: OldSansBlack;
+            src: url("fonts/OldSansBlack.ttf")format('truetype');
+        }
+        @font-face {
+            font-family: TheImposter;
+            src: url("fonts/TheImpostor.ttf");
+        }
+        @font-face {
+            font-family: mollenBoldNarrow;
+            src: url('fonts/mollenBoldNarrow.otf');
+        }
+        @font-face {
+            font-family:mollenRegular ;
+            src: url('fonts/mollenRegular.otf');
+        }
+        @font-face {
+            font-family:Nurom-bold ;
+            src: url('fonts/Nurom-Bold.ttf');
+        }
+    </style>
+</head>
+<body  onload="startGame()">
+  
+     <div class="gridbox-container">
+         <div class="grid-item">
+         </div>
+         <div class="grid-item">
+            <div class="container">
+                <canvas id="gameCanvas">Your browser doesnt support HTML5 canvas!!</canvas>
+                <div class="Maintext">
+                    <p id="firstline">Unable to reach the PM</p>
+                <p>PM is just a phone call away but we can't reach him.</p>
+                <p>Try:
+                <ul>
+                    <li>Calling it an internal matter</li>
+                    <li>Calling it an international conspiracy</li>
+                </ul>
+                </p>
+                
+               
+                <p id="error">ERR_TOO_MUCH_DEMOCRACY</p>
+                </div>
+                
+            </div>
+         </div>
+         <div class="grid-item"></div>
+     </div>
+    
+
+   
+
+
+
+    <script>
+        var myGamePiece;
+const myObstacles=[];
+const myBridies=[];
+let objects=[];
+
+
+
+let temp;
+let msgcontrol;
+let rihannahit=false;
+
+
+let becky
+let beckyH=60;
+let beckyW=55;
+let gap;
+let speed=0;//change here to increase the overall speed of everything
+let i=1;
+
+let canvas_height=300;
+let canvas_width=900;
+
+let fps=100;
+
+let showEndScreen=false;
+let showStartScreen=true;
+//keyboard setup
+const SPACEBAR=32;
+var keyboardMoveUp=false;
+
+let ctx;
+let score;
+
+
+//sounds
+// let startSound;
+// let endSound;
+let HitSound;
+let jumpSound;
+
+const beckysIMG=["./assets/evil_dino.svg","https://www.flaticon.com/svg/static/icons/svg/2466/2466824.svg","./assets/T_rex.svg"];
+
+
+
+
+function startGame(){
+       gameArea.start();
+
+        //..........................creating audio files for the game !!!,,,,,,,,,,,,,,,,,,,,,,,,
+    //   startSound= new gameArea.sound("./sounds/startscreen.mp3");
+    //   endSound = new gameArea.sound("./sounds/endscreen.mp3");
+      jumpSound = new gameArea.sound("./sounds/Jump.mp3");
+      HitSound = new gameArea.sound("./sounds/ErrSound.mp3");
+
+      objects=[{width:48,height:43,src:'assets2/Woman-Obstacle.png',type:'woman'},
+               {width:53,height:40,src:'assets2/Yellow-Barricade.png',type:'yellow-barricade'},
+               {width:57,height:40,src:'assets2/Steel-Cage.png',type:'steel-cage'},
+               {width:45,height:15,src:'assets2/Nails.png',type:'nails'},
+               {width:53,height:40,src:'assets2/Busted.png',type:'busted'},
+               {width:53,height:42,src:'assets2/police.png',type:'police'},
+               { width:45,height:40,src:'assets2/Rihanna.png',type:'rihanna'}]
+        
+      messages=['You just got nailed.','Slow down fella,you might overturn.','Jai Jawan meets Jai Kisan','Iron fencing brought down all the way from the border.','You just got struck by a loudmouth riding a wooden horse.','Busted. Anti-Nationals to the prison.','Love the way you try.You can Ri-Ri-Respawn.']
+      
+
+       becky= new SPRITEIMAGE(0,0,770,309,2,100,canvas_height-beckyH,beckyW,beckyH,'./assets2/mainCharacterSprite.png')
+
+      
+       bg = new background(0,0,2700,canvas_width,canvas_height-30,0,40,canvas_width,canvas_height,'assets2/bg2.png');
+       road =new background(0,0,2500,canvas_width,41,0,canvas_height-30,canvas_width,41,'assets2/road.png','road')
+
+       restartbtn=new imageBuilder(canvas_width/2-70,canvas_height/2+32,46,30,'assets2/Restart-Button.png');
+       
+      //needs to move in drawEverythig if any changes need to happen
+
+
+     window.onkeydown=keyDownHandler;//keyboard setup
+     window.onkeyup=keyUpHandler;
+
+    
+}
+
+
+var gameArea = {///////////the whole game area is in a object///////////////
+    canvas:document.getElementById('gameCanvas'),
+   
+
+    start:function(){
+        
+        this.canvas.width=canvas_width;
+        this.canvas.height=canvas_height;
+
+        this.canvas.addEventListener('click',()=>{
+            mouseClick();
+        })
+        this.canvas.addEventListener('touchstart',()=>{
+            mouseClick()
+        })
+
+        this.context=this.canvas.getContext("2d");
+        this.frameNo=0;
+        this.interval=setInterval(function(){
+            moveBecky();
+            drawEverything();
+        },1000/fps);
+        document.body.addEventListener("touchstart",moveup);
+        document.body.addEventListener("touchend",motion);
+    },
+    sound:function(src) {//.......................................created audio constructor function here !!!..........
+          this.sound = document.createElement("audio");
+          this.sound.src = src;
+          this.sound.setAttribute("preload", "auto");
+          this.sound.setAttribute("controls", "none");
+          this.sound.style.display = "none";
+          this.sound.volume=0.1;
+          document.body.appendChild(this.sound);
+          this.play = function(){
+            this.sound.play();
+          }
+          this.stop = function(){
+            this.sound.pause();
+          }
+      },
+
+    clear:function(){
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    },
+
+    stop:function(){
+        
+        clearInterval(this.interval);
+    }
+}
+
+
+function drawEverything(){//...................THE DRAW EVERYTHING FUNCTION>>>>>>>>>>>>>>>
+    if(showStartScreen){
+        gameArea.clear();
+       // bg.draw()
+        becky.startScreen();
+        return;
+    }
+    if(showEndScreen){
+        becky.endScreen(msgcontrol);
+        return;
+    }
+
+   
+    
+    myObstacles.forEach(function(obs,i){
+        if(becky.crashWith(obs)){///checking collsion with the obstacles//////////////////////////
+            HitSound.play();
+            becky.reset();
+            temp=i;
+            msgcontrol=obs.type;
+            // console.log(obs.type);
+            if(obs.type=='rihanna') rihannahit=true;    
+        }
+    })//checking collsion!!
+        
+
+    gameArea.clear();/////////...............calling the game clear function here...........................////////
+    bg.draw()
+    road.draw()
+    if(!showEndScreen){
+        gameArea.frameNo+=1;
+        
+        if(gameArea.frameNo==1000*i){//here 1000 means 100 score.u can change it to 750 if you want to increase the speed per 75!
+            speed+=0.09;//chnage here to increase speed per score !currently its 5% per 100 score
+            i+=1;
+            console.log(i,speed)
+        }
+    }
+    if(gameArea.frameNo==1||everyinterval(250)){//creating obstacle array!!
+        //birdY=(getRndInteger(100,800)/5);
+        gap=(getRndInteger(400,600));
+        let i=getRndInteger(0,7);
+       // console.log(gameArea.canvas.width+cactus_gap);
+        myObstacles.push(obsInput(gameArea.canvas.width,gameArea.canvas.height,gap,objects[i]));
+        
+    }
+   
+    myObstacles.forEach(function(obs){
+       
+        if(obs.type=='rihanna'){
+            obs.x-=(2+speed);
+            obs.y=100+Math.cos(obs.x*0.015)*45;
+        }
+        obs.x-=(4.5+speed);
+               obs.draw();
+    })
+  
+
+
+    becky.draw(); 
+    becky.scoredraw();
+}
+
+
+function moveBecky(){//..................................
+    becky.newpos();
+    becky.hitbottom();
+}
+class background{
+    constructor(srcX,srcY,fullwidth,swidth,sheight,x,y,width,height,src,type){
+        this.srcX=srcX;
+        this.srcY=srcY;
+        this.swidth=swidth;
+        this.sheight = sheight;
+        this.fullwidth=fullwidth;
+        this.type=type;
+        this.x=x;
+        this.y=y;
+        this.width = width;
+        this.height = height;
+        this.image = new Image();
+        this.image.src = src;
+        this.curFrame = 0;
+    }
+    draw(){
+     this.updateFrame()
+       ctx=gameArea.context;
+       ctx.drawImage(this.image,this.srcX,this.srcY,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
+        }
+     updateFrame(){
+        if(this.srcX>=this.fullwidth-this.width){
+            this.srcX=0;     
+        }
+        if(!showEndScreen&&!showStartScreen){
+            if(this.type=='road')this.srcX+=(3.5+speed);
+              this.srcX+=(0.6+speed);
+        }
+       
+    }
+}
+class SPRITEIMAGE{//constructor function for the dog spritesheet
+    constructor(srcX,srcY,spritewidth,spriteheight,col,x,y,width,height,src){
+        this.srcX=srcX;
+        this.srcY=srcY;
+        this.swidth=spritewidth/col;
+        this.sheight = spriteheight;
+        this.x=x;
+        this.y=y;
+        this.width = width;
+        this.height = height;
+        this.image = new Image();
+        this.image.src = src;
+        this.bounce=0.2; 
+        this.gravity = 0;
+        this.gravitySpeed = 0;  
+        
+        
+        this.curFrame = 0;
+        this.frameCount = col;
+      
+    }
+    draw(){
+     this.updateFrame()
+       ctx=gameArea.context;
+       ctx.drawImage(this.image,this.srcX,this.srcY,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
+      
+    }
+    staticdraw(){
+        ctx=gameArea.context;
+       ctx.drawImage(this.image,this.srcX,this.srcY,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
+    }
+        
+    updateFrame(){
+        if(this.curFrame>=this.frameCount){
+            this.curFrame=0;     
+        }
+        this.srcX = this.curFrame*this.swidth;
+        this.curFrame++;
+    }
+	crashWith(otherobj){
+        var myleft = this.x+5;
+        var myright = this.x + (this.width-5);
+        var mytop = this.y;
+        var mybottom = this.y + (this.height-5);
+        var otherleft = otherobj.x+5;
+        var otherright = otherobj.x + (otherobj.width-5);
+        var othertop = otherobj.y+5;
+        var otherbottom = otherobj.y + (otherobj.height);
+        var crash = true;
+        if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
+            crash = false;
+        }
+        return crash;
+    }
+    newpos(){
+      //  console.log(this.gravitySpeed);
+        this.gravitySpeed += this.gravity;
+        this.y +=this.gravitySpeed;
+        
+        if(this.y<=160){//less value higher jump performs
+            //console.log("exceeds");        
+            return this.gravity=+.28;//.......the gravitional pull when he reaches maximum height..........!!!!!!!!!!
+                
+        }    
+    }
+    hitbottom(){
+        let rockbottom=gameArea.canvas.height-this.height;
+        if(this.y>rockbottom){
+            this.y=rockbottom;
+            
+            this.gravitySpeed = -(this.gravitySpeed * this.bounce);
+            keyboardMoveUp=true;
+        }
+    }
+    scoredraw(){///score draw
+            ctx = gameArea.context;
+            ctx.font = "13px TheImposter";
+            score=(gameArea.frameNo/10).toFixed();
+            let newScore=MakeScore(score);
+
+            ctx.fillStyle="#535353"
+            ctx.fillText(newScore,canvas_width-100,50);
+    } 
+    reset(){
+            //    console.log("reset called")
+              
+              this.y=canvas_height-beckyH+.1;
+                showEndScreen=true;
+              this.image.src="assets2/mainCharacterSprite.png";
+    }
+    endScreen(type){
+        ctx=gameArea.context;
+        
+        ctx.fillStyle="#202124"
+        ctx.fillRect(210,90,435,111);
+        ctx.font="10px TheImposter";
+        ctx.fillStyle='#c4c7c7';
+        if(rihannahit) ctx.fillText('Game Not Over',canvas_width/2-110,125);
+        if(!rihannahit) ctx.fillText('Game Over',canvas_width/2-90,125);
+        switch(type){
+            case 'nails':ctx.fillText(messages[0],canvas_width/2-125,150);
+            break;
+            case 'yellow-barricade':ctx.fillText(messages[1],canvas_width/2-180,150);
+            break;
+            case 'police':ctx.fillText(messages[2],canvas_width/2-147,150);
+            break;
+            case 'steel-cage':ctx.fillText(messages[3],canvas_width/2-235,150);
+            break;
+            case 'woman':ctx.fillText(messages[4],canvas_width/2-240,150);
+            break;
+            case 'busted':ctx.fillText(messages[5],canvas_width/2-180,150);
+            break;
+            case 'rihanna':ctx.fillText(messages[6],canvas_width/2-210,150);
+            break;
+        }
+        if(rihannahit) ctx.fillText('Please Continue',canvas_width/2-110,175);
+       if(!rihannahit) ctx.fillText('Please Restart',canvas_width/2-100,175);
+        
+       restartbtn.draw()
+        
+    }
+    startScreen(){
+        ctx=gameArea.context;
+        ctx.font="20px OldSansBlack";
+        ctx.fillStyle='#c4c7c7'
+       // ctx.fillText("Good luck! ",60,150)
+        becky.staticdraw()
+    }
+}
+
+class imageBuilder{//......................ECMA6 clss/object constructor...........
+    constructor(x,y,width,height,color,type){
+        this.x=x;
+        this.y=y;
+        this.width=width;
+        this.height=height;
+        this.image = new Image();
+        this.image.src = color;  
+        this.type=type; 
+        this.speedX=0;
+        this.speedY=0; 
+        this.bounce=0.2; 
+        this.gravity = 0;
+        this.gravitySpeed = 0;  
+    }
+    draw(){
+         ctx=gameArea.context;
+        ctx.drawImage(this.image,this.x, this.y, this.width, this.height);
+    }
+ 
+}
+
+
+function obsInput(canvasW,canvasH,gap,obj){
+    let img;
+    if(obj.type=='rihanna'){
+        let h=getRndInteger(140,250);
+         img = new imageBuilder(canvasW+gap,h,obj.width,obj.height,obj.src,obj.type); 
+    }else{
+         img = new imageBuilder(canvasW+gap,canvasH-obj.height,obj.width,obj.height,obj.src,obj.type);
+    }
+    
+    return img;
+}
+
+
+function everyinterval(n) {
+    return ((gameArea.frameNo / n) % 1 == 0) ?  true : false;
+}
+
+function getRndInteger(min, max) {
+    return Math.floor(Math.random() * (max - min) ) + min;
+  }
+
+  function MakeScore(y){
+    if(y<10){
+        z=`0000000${y}`
+   }
+   else if(y>=10&&y<100){
+        z=`000000${y}`
+   }
+   else if(y>=100&&y<1000){
+       z=`00000${y}`
+   }
+   else if(y>=1000&&y<10000){
+       z=`0000${y}`
+   }
+   else if(y>=10000&&y<100000)
+   {
+       z=`000${y}`
+   }
+   else if(y>=100000&&y<1000000){
+       z=`00${y}`
+   }
+   else if(y>=1000000&&y<10000000){
+       z=`0${y}`
+   }
+   else if(y>=10000000&&y<100000000){
+       z=`${y}`
+   }
+   return z;
+}
+
+  function moveup(){
+      if(keyboardMoveUp){
+        //   console.log("up called")
+         if(!showEndScreen) jumpSound.play()
+          becky.gravitySpeed=-4;
+        becky.gravity=-.10;
+      keyboardMoveUp=false;
+      }
+      
+  }
+  function motion(){
+    //  console.log('motion called');
+      becky.gravity=.11;
+  }
+
+  //keyboard setup
+
+  function keyDownHandler(e){
+    if(showStartScreen){
+        becky.y=canvas_height-beckyH+.1;
+      
+        
+        gameArea.frameNo=0;
+        showStartScreen=false;
+    }
+    switch (e.keyCode){
+        case SPACEBAR:moveup();break;
+    }
+}
+
+function keyUpHandler(e){
+   switch(e.keyCode){//capital c is must camel case
+         case SPACEBAR:motion();break;
+   }
+}
+function mouseClick(){
+    if(showEndScreen){
+        becky.reset();
+        showEndScreen=false;
+        if(!rihannahit){
+            gameArea.frameNo=0;
+            i=1;
+        }
+        if(rihannahit){
+            rihannahit=false;
+        }
+       
+        myObstacles.splice(temp,3);
+    }
+    if(showStartScreen){
+        becky.y=canvas_height-beckyH+.1;
+        
+        gameArea.frameNo=0;
+        showStartScreen=false;
+    }
+}
+    </script>
+</body>
+</html>
